@@ -22,7 +22,7 @@ typedef struct
 } coords;
 
 coords *bresenham(coords initial, coords final, uint16_t *steps);
-coords *draw_dense_line(coords initial, coords final, SDL_Colour **canvas, uint8_t side, uint16_t *steps);
+coords *get_dense_line(coords initial, coords final, SDL_Colour **canvas, uint8_t side, uint16_t *steps);
 
 void draw_coords(Demo *running_demo, coords *to_draw, SDL_Colour **canvas, const uint16_t *steps);
 void read_and_draw_line(Demo *running_demo, SDL_Colour **canvas, FILE *in);
