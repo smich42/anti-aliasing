@@ -3,7 +3,7 @@
 
 #include "SDL2/SDL.h"
 
-void SS(SDL_Colour **canvas, uint8_t div, uint16_t w, uint16_t h);
+void super_sample(SDL_Colour **dense, uint16_t w, uint16_t h, uint8_t div);
 void low_pass(SDL_Colour **canvas, uint16_t w, uint16_t h);
 
 #endif //ANTI_ALIASING_ANTIALIASING_H
