@@ -1,18 +1,8 @@
 #ifndef ANTI_ALIASING_DRAW_H
 #define ANTI_ALIASING_DRAW_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include "SDL2/SDL.h"
-
-#include "demo.h"
-
-#define MAX(a, b)             \
-({                           \
-    __typeof__ (a) _a = (a); \
-    __typeof__ (b) _b = (b); \
-    _a > _b ? _a : _b;       \
-})
 
 typedef struct
 {
@@ -21,10 +11,10 @@ typedef struct
     SDL_Colour colour;
 } coords;
 
-coords *bresenham(coords initial, coords final, uint16_t *steps);
-coords *get_dense_line(coords initial, coords final, SDL_Colour **canvas, uint8_t side, uint16_t *steps);
+coords *bresenham(coords initial, coords final, uint8_t side, bool dense, uint16_t *steps);
 
-void draw_coords(Demo *running_demo, coords *to_draw, SDL_Colour **canvas, const uint16_t *steps);
-void read_and_draw_line(Demo *running_demo, SDL_Colour **canvas, FILE *in);
+void save_coords(SDL_Colour **canvas, coords *to_save, const uint16_t *steps);
+void show_canvas(SDL_Renderer *renderer, SDL_Colour **canvas, uint16_t w, uint16_t h, bool animate);
+void show_coords(SDL_Renderer *renderer, coords *to_draw, bool animate, const uint16_t *steps);
 
 #endif //ANTI_ALIASING_DRAW_H

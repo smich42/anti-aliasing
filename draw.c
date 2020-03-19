@@ -1,37 +1,52 @@
 #include "draw.h"
+#include "macros.h"
 
-void read_and_draw_line(Demo *running_demo, SDL_Colour **canvas, FILE *in)
+void save_coords(SDL_Colour **canvas, coords *to_save, const uint16_t *steps)
 {
-    coords initial, final;
-
-    fscanf(in, "%hu %hu", &initial.x, &final.x);
-    fscanf(in, "%hu %hu", &initial.y, &final.y);
-
-    fprintf(in, "-----------------\n");
-
-    uint16_t steps;
-    draw_coords(running_demo, bresenham(initial, final, &steps), canvas, &steps);
-    // draw_coords(running_demo, get_dense_line(initial, final, canvas, 4, &steps), canvas, &steps);
+    for (int i = 0; i < *steps; ++i)
+        canvas[to_save[i].x][to_save[i].y] = to_save[i].colour;
 }
 
-void draw_coords(Demo *running_demo, coords *to_draw, SDL_Colour **canvas, const uint16_t *steps)
+void show_canvas(SDL_Renderer *renderer, SDL_Colour **canvas, uint16_t w, uint16_t h, bool animate)
+{
+    for (int i = 0; i < w; ++i)
+        for (int j = 0; j < h; ++j)
+        {
+            SDL_SetRenderDrawColor(renderer,
+                                   canvas[i][j].r,
+                                   canvas[i][j].g,
+                                   canvas[i][j].b,
+                                   canvas[i][j].a);
+
+            SDL_RenderDrawPoint(renderer, i, j);
+            if (animate)
+                SDL_RenderPresent(renderer);
+        }
+
+    if (!animate)
+        SDL_RenderPresent(renderer);
+}
+
+void show_coords(SDL_Renderer *renderer, coords *to_draw, bool animate, const uint16_t *steps)
 {
     for (int i = 0; i < *steps; ++i)
     {
-        SDL_SetRenderDrawColor(running_demo->display.renderer, to_draw[i].colour.r, to_draw[i].colour.g,
+        SDL_SetRenderDrawColor(renderer,
+                               to_draw[i].colour.r,
+                               to_draw[i].colour.g,
                                to_draw[i].colour.b,
                                to_draw[i].colour.a);
 
-        SDL_RenderDrawPoint(running_demo->display.renderer, to_draw[i].x, to_draw[i].y);
-        canvas[to_draw[i].x][to_draw[i].y] = to_draw[i].colour;
+        SDL_RenderDrawPoint(renderer, to_draw[i].x, to_draw[i].y);
 
-        SDL_RenderPresent(running_demo->display.renderer);
+        if (animate)
+            SDL_RenderPresent(renderer);
     }
-
-    free(to_draw);
+    if (!animate)
+        SDL_RenderPresent(renderer);
 }
 
-coords *get_dense_line(coords initial, coords final, SDL_Colour **canvas, uint8_t side, uint16_t *steps)
+coords *bresenham(coords initial, coords final, uint8_t side, bool dense, uint16_t *steps)
 {
     uint16_t dx = abs(final.x - initial.x);
     uint16_t dy = abs(final.y - initial.y);
@@ -40,72 +55,78 @@ coords *get_dense_line(coords initial, coords final, SDL_Colour **canvas, uint8_
 
     coords *line = malloc(sizeof(coords) * (*steps));
 
-    uint16_t gradient = 2 * dy;
-    int error = gradient - dx;
-
     uint16_t x = initial.x;
     uint16_t y = initial.y;
 
-    for (int i = 0; x <= final.x - side; i += side * side)
+    float slope = (float) dy / (float) dx;
+
+    if (slope < 1)
     {
-        int cnt = 0;
-        for (int j = 0; j < side; ++j)
-            for (int k = 0; k < side; ++k)
+        int d = 2 * dy - dx;
+        int dT = 2 * (dy - dx);
+        uint16_t dS = 2 * dy;
+
+        for (int i = 0; x < final.x - side; i += side * side)
+        {
+            int cnt = 0;
+            for (int j = 0; j < side; ++j)
+                for (int k = 0; k < side; ++k)
+                {
+                    line[i + cnt].x = x + j;
+                    line[i + cnt].y = y + k;
+
+                    line[i + cnt].colour.r = 255;
+                    line[i + cnt].colour.g = 0;
+                    line[i + cnt].colour.b = 0;
+                    line[i + cnt].colour.a = 255;
+
+                    ++cnt;
+                }
+
+            if (d < 0)
+                d += dS;
+            else
             {
-                line[i + cnt].x = x + j;
-                line[i + cnt].y = y + k;
-
-                line[i + cnt].colour.r = 255;
-                line[i + cnt].colour.g = 0;
-                line[i + cnt].colour.b = 0;
-                line[i + cnt].colour.a = 255;
-
-                canvas[x + j][y + k] = line[i + cnt].colour;
-
-                ++cnt;
+                d += dT;
+                y += dense ? 1 : side;
             }
 
-        if ((error += gradient) >= 0)
-        {
-            error -= 2 * dx;
-            ++y;
+            x += dense ? 1 : side;
         }
-        ++x;
     }
-
-    return line;
-}
-
-coords *bresenham(coords initial, coords final, uint16_t *steps)
-{
-    uint16_t dx = abs(final.x - initial.x);
-    uint16_t dy = abs(final.y - initial.y);
-
-    *steps = MAX(dx, dy);
-    coords *line = malloc(sizeof(coords) * (*steps));
-
-    uint16_t gradient = 2 * dy;
-    int error = gradient - dx;
-
-    uint16_t x = initial.x;
-    uint16_t y = initial.y;
-
-    for (int i = 0; x <= final.x; ++i)
+    else
     {
-        line[i].x = x;
-        line[i].y = y;
+        int d = 2 * dx - dy;
+        int dT = 2 * (dx - dy);
+        uint16_t dS = 2 * dx;
 
-        line[i].colour.r = 255;
-        line[i].colour.g = 0;
-        line[i].colour.b = 0;
-        line[i].colour.a = 255;
-
-        if ((error += gradient) >= 0)
+        for (int i = 0; y < final.y - side; i += side * side)
         {
-            error -= 2 * dx;
-            ++y;
+            int cnt = 0;
+            for (int j = 0; j < side; ++j)
+                for (int k = 0; k < side; ++k)
+                {
+                    line[i + cnt].x = x + j;
+                    line[i + cnt].y = y + k;
+
+                    line[i + cnt].colour.r = 255;
+                    line[i + cnt].colour.g = 0;
+                    line[i + cnt].colour.b = 0;
+                    line[i + cnt].colour.a = 255;
+
+                    ++cnt;
+                }
+
+            if (d < 0)
+                d += dS;
+            else
+            {
+                d += dT;
+                x += dense ? 1 : side;
+            }
+
+            y += dense ? 1 : side;
         }
-        ++x;
     }
 
     return line;
