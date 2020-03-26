@@ -1,6 +1,7 @@
 #include "antialiasing.h"
 #include "demo.h"
 #include "draw.h"
+#include <stdlib.h>
 
 #define DEFAULT_W 800
 #define DEFAULT_H 600
@@ -20,8 +21,7 @@ Demo MainDemo = {
         SDL_FALSE
 };
 
-int main(int argc, char **argv)
-{
+int main(void) {
     demo_init(&MainDemo, DEFAULT_W, DEFAULT_H, DISPLAY_TITLE);
 
     SDL_RenderClear(MainDemo.display.renderer);
@@ -30,13 +30,11 @@ int main(int argc, char **argv)
     SDL_Colour **canvas = malloc(DEFAULT_W * sizeof(SDL_Colour *));
     SDL_Colour **dense = malloc(DEFAULT_W * sizeof(SDL_Colour *));
 
-    for (int i = 0; i < DEFAULT_W; ++i)
-    {
+    for (int i = 0; i < DEFAULT_W; ++i) {
         canvas[i] = malloc(DEFAULT_H * sizeof(SDL_Colour));
         dense[i] = malloc(DEFAULT_H * sizeof(SDL_Colour));
 
-        for (int j = 0; j < DEFAULT_H; ++j)
-        {
+        for (int j = 0; j < DEFAULT_H; ++j) {
             dense[i][j].r = canvas[i][j].r = 0;
             dense[i][j].g = canvas[i][j].g = 0;
             dense[i][j].b = canvas[i][j].b = 0;
@@ -52,8 +50,7 @@ int main(int argc, char **argv)
     coords initial, final;
     uint16_t steps;
 
-    for (int i = 0; i < N; ++i)
-    {
+    for (int i = 0; i < N; ++i) {
         fscanf(rf, "%hu %hu", &initial.x, &final.x);
         fscanf(rf, "%hu %hu", &initial.y, &final.y);
 
@@ -73,11 +70,9 @@ int main(int argc, char **argv)
     show_canvas(MainDemo.display.renderer, dense, DEFAULT_W, DEFAULT_H, true);
 
     SDL_Event e;
-    while (MainDemo.is_running)
-    {
+    while (MainDemo.is_running) {
         while (SDL_PollEvent(&e))
-            switch (e.type)
-            {
+            switch (e.type) {
                 case SDL_QUIT:
                     MainDemo.is_running = SDL_FALSE;
                     break;
