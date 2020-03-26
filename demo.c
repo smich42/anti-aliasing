@@ -1,7 +1,8 @@
+#include <stdio.h>
+
 #include "demo.h"
 
-void demo_init(Demo *to_init, uint16_t w, uint16_t h, char *title)
-{
+void demo_init(Demo *to_init, uint16_t w, uint16_t h, char *title) {
     printf("Initialising...\n");
 
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -12,8 +13,7 @@ void demo_init(Demo *to_init, uint16_t w, uint16_t h, char *title)
     to_init->is_running = SDL_TRUE;
 }
 
-void demo_quit(Demo *to_quit)
-{
+void demo_quit(Demo *to_quit) {
     printf("Quitting...\n");
 
     SDL_DestroyWindow(to_quit->display.window);

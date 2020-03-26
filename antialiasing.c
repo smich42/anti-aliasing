@@ -1,18 +1,22 @@
 #include "antialiasing.h"
 
-void super_sample(SDL_Colour **dense, uint16_t w, uint16_t h, uint8_t div)
+void super_sample(SDL_Colour **dense, uint16_t w, uint16_t h, uint16_t side, uint16_t sampling_density)
 {
     printf("Applying Super-Sampling filter...\n");
-    // Take top-left pixel of every square
-    for (int x = 0; x < w - div; x += div)
-        for (int y = 0; y < h - div; y += div)
+
+    uint16_t sampling_pixel_side = side / sampling_density;
+    uint16_t points_in_pixel = sampling_pixel_side * sampling_pixel_side;
+
+    // Take top-left point of every pixel
+    for (int x = 0; x < w - side; x += side)
+        for (int y = 0; y < h - side; y += side)
         {
-            // Take every pixel of the square with top-left pixel at (x,y)
             uint16_t r, g, b, a;
             r = g = b = a = 0;
 
-            for (int i = 0; i < div; ++i)
-                for (int j = 0; j < div; ++j)
+            // Take every point of the pixel
+            for (int i = 0; i < sampling_pixel_side; i += side / sampling_pixel_side)
+                for (int j = 0; j < sampling_pixel_side; j += side / sampling_pixel_side)
                 {
                     r += dense[x + i][y + j].r;
                     g += dense[x + i][y + j].g;
@@ -20,13 +24,13 @@ void super_sample(SDL_Colour **dense, uint16_t w, uint16_t h, uint8_t div)
                     a += dense[x + i][y + j].a;
                 }
 
-            SDL_Colour new_colour = {r / (div * div),
-                                     g / (div * div),
-                                     b / (div * div),
-                                     a / (div * div)};
+            SDL_Colour new_colour = {r / points_in_pixel,
+                                     g / points_in_pixel,
+                                     b / points_in_pixel,
+                                     a / points_in_pixel};
 
-            for (int i = 0; i < div; ++i)
-                for (int j = 0; j < div; ++j)
+            for (int i = 0; i < side; ++i)
+                for (int j = 0; j < side; ++j)
                     dense[x + i][y + j] = new_colour;
         }
 }

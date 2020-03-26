@@ -1,12 +1,11 @@
 #ifndef ANTI_ALIASING_DEMO_H
 #define ANTI_ALIASING_DEMO_H
 
-#include <stdio.h>
 #include "SDL2/SDL.h"
 
-typedef struct
+typedef struct Demo
 {
-    struct
+    struct display
     {
         SDL_Window *window;
         SDL_Renderer *renderer;
