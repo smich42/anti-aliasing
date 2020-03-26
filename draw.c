@@ -1,110 +1,119 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "draw.h"
 #include "macros.h"
 
-coords *bresenham(coords initial, coords final, SDL_Colour colour) {
+SDL_Colour **
+bresenham(coords initial, coords final, uint16_t side, uint16_t density, SDL_Colour **canvas, SDL_Colour colour)
+{
+    uint16_t inc = side / density;
     uint16_t dx = abs(final.x - initial.x);
     uint16_t dy = abs(final.y - initial.y);
-
-    coords *line = malloc(sizeof(coords) * MAX(dx, dy));
 
     uint16_t x = initial.x;
     uint16_t y = initial.y;
 
+    uint16_t prev_x = x, prev_y = y;
+
     float slope = (float) dy / (float) dx;
 
-    if (slope < 1) {
-        int d = 2 * dy - dx;
+    if (slope < 1)
+    {
+        int d = (2 * dy) - dx;
         int dT = 2 * (dy - dx);
         uint16_t dS = 2 * dy;
 
-        for (int i = 0; x < final.x; ++i) {
-            line[i].x = x;
-            line[i].y = y;
+        for (int i = 0; x < final.x; ++i)
+        {
+            for (int add_x = 0; add_x < side; ++add_x)
+                for (int add_y = 0; add_y < side; ++add_y)
+                {
+                    int cur_x = x + add_x, cur_y = y + add_y;
 
-            line[i].colour = colour;
+                    if (cur_x >= final.x)
+                        cur_x = prev_x;
+
+                    if (cur_y >= final.y)
+                        cur_y = prev_y;
+
+                    canvas[cur_x][cur_y] = colour;
+
+                    prev_x = cur_x;
+                    prev_y = cur_y;
+                }
 
             if (d < 0)
                 d += dS;
-            else {
+            else
+            {
                 d += dT;
-                ++y;
+                y += inc;
             }
 
-            x++;
+            x += inc;
         }
-    } else {
-        int d = 2 * dx - dy;
+    }
+    else
+    {
+        int d = (2 * dx) - dy;
         int dT = 2 * (dx - dy);
         uint16_t dS = 2 * dx;
 
-        for (int i = 0; y < final.y; ++i) {
+        for (int i = 0; y < final.y; ++i)
+        {
+            for (int add_x = 0; add_x < side; ++add_x)
+                for (int add_y = 0; add_y < side; ++add_y)
+                {
+                    int cur_x = x + add_x, cur_y = y + add_y;
 
-            line[i].x = x;
-            line[i].y = y;
+                    if (cur_x >= final.x)
+                        cur_x = prev_x;
 
-            line[i].colour = colour;
+                    if (cur_y >= final.y)
+                        cur_y = prev_y;
 
+                    canvas[cur_x][cur_y] = colour;
+
+                    prev_x = cur_x;
+                    prev_y = cur_y;
+                }
             if (d < 0)
                 d += dS;
-            else {
+            else
+            {
                 d += dT;
-                ++x;
+                x += inc;
             }
 
-            ++y;
+            y += inc;
         }
     }
 
-    return line;
+    return canvas;
 }
 
-void save_coords(SDL_Colour **canvas, coords *to_save, uint16_t w, uint16_t h, uint16_t side, uint16_t density) {
-    for (int i = 0; to_save[i].x < w - side && to_save[i].y < h - side; ++i) {
-        for (int x = 0; x < side; ++x)
-            for (int y = 0; y < side; ++y)
-                canvas[to_save[i].x + x][to_save[i].y + y] = to_save[i].colour;
-    }
-}
-
-void show_canvas(SDL_Renderer *renderer, SDL_Colour **canvas, uint16_t w, uint16_t h, bool animate) {
-    for (int i = 0; i < w; ++i) {
-        for (int j = 0; j < h; ++j) {
+void show_canvas(SDL_Renderer *renderer, SDL_Colour **canvas, uint16_t w, uint16_t h, uint16_t scale, bool animate)
+{
+    for (int i = 0; i < w; ++i)
+    {
+        for (int j = 0; j < h; ++j)
+        {
             SDL_SetRenderDrawColor(renderer,
                                    canvas[i][j].r,
                                    canvas[i][j].g,
                                    canvas[i][j].b,
                                    canvas[i][j].a);
 
-            SDL_RenderDrawPoint(renderer, i, j);
+            for (int x = 0; x < scale; ++x)
+                for (int y = 0; y < scale; ++y)
+                    SDL_RenderDrawPoint(renderer, i * scale + x, j * scale + y);
 
-            // Refresh animation every 8 pixels drawn
+            // Refresh animation every 32 pixels drawn
             if (animate && j % 32 == 0)
                 SDL_RenderPresent(renderer);
         }
     }
 
-    if (!animate)
-        SDL_RenderPresent(renderer);
-}
-
-void show_coords(SDL_Renderer *renderer, coords *to_draw, uint16_t lim_w, uint16_t lim_h, uint16_t side, bool animate) {
-    for (int i = 0; to_draw[i].x < lim_w && to_draw[i].y < lim_h; ++i) {
-        SDL_SetRenderDrawColor(renderer,
-                               to_draw[i].colour.r,
-                               to_draw[i].colour.g,
-                               to_draw[i].colour.b,
-                               to_draw[i].colour.a);
-
-        for (int x = 0; x < side; ++x)
-            for (int y = 0; y < side; ++y)
-                SDL_RenderDrawPoint(renderer, to_draw[i].x * side + x, to_draw[i].y * side + y);
-
-        if (animate)
-            SDL_RenderPresent(renderer);
-    }
-
-    if (!animate)
-        SDL_RenderPresent(renderer);
+    SDL_RenderPresent(renderer);
 }
