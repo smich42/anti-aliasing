@@ -6,13 +6,13 @@
 #include "demo.h"
 #include "draw.h"
 
-#define SAMPLING_DENSITY 4
-#define PIXEL_SIDE 8
+#define SAMPLING_DENSITY 1
+#define PIXEL_SIDE 12
 
 #define DISPLAY_TITLE "Anti-aliasing Demo"
 
-#define WINDOW_W 800
-#define WINDOW_H 600
+#define WINDOW_W 1200
+#define WINDOW_H 900
 
 #define CANVAS_W (WINDOW_W / PIXEL_SIDE)
 #define CANVAS_H (WINDOW_H / PIXEL_SIDE)
@@ -103,8 +103,10 @@ int main(int argc, char **argv)
     if (!ANIMATE)
         sleep(2);
 
-    // super_sample(dense, WINDOW_W, WINDOW_H, PIXEL_SIDE, SAMPLING_DENSITY);
-    show_canvas(MainDemo.display.renderer, dense, WINDOW_W, WINDOW_H, 1, ANIMATE);
+    // show_canvas(MainDemo.display.renderer, dense, WINDOW_W, WINDOW_H, 1, ANIMATE);
+
+    super_sample(dense, canvas, WINDOW_W, WINDOW_H, PIXEL_SIDE, SAMPLING_DENSITY);
+    show_canvas(MainDemo.display.renderer, canvas, CANVAS_W, CANVAS_H, PIXEL_SIDE, ANIMATE);
 
     SDL_Event e;
     while (MainDemo.is_running)

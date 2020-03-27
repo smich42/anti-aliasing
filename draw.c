@@ -26,22 +26,9 @@ bresenham(coords initial, coords final, uint16_t side, uint16_t density, SDL_Col
 
         for (int i = 0; x < final.x; ++i)
         {
-            for (int add_x = 0; add_x < side; ++add_x)
-                for (int add_y = 0; add_y < side; ++add_y)
-                {
-                    int cur_x = x + add_x, cur_y = y + add_y;
-
-                    if (cur_x >= final.x)
-                        cur_x = prev_x;
-
-                    if (cur_y >= final.y)
-                        cur_y = prev_y;
-
-                    canvas[cur_x][cur_y] = colour;
-
-                    prev_x = cur_x;
-                    prev_y = cur_y;
-                }
+            for (int add_x = 0; add_x < side && x + add_x < final.x; ++add_x)
+                for (int add_y = 0; add_y < side && y + add_y < final.y; ++add_y)
+                    canvas[x + add_x][y + add_y] = colour;
 
             if (d < 0)
                 d += dS;
@@ -62,22 +49,10 @@ bresenham(coords initial, coords final, uint16_t side, uint16_t density, SDL_Col
 
         for (int i = 0; y < final.y; ++i)
         {
-            for (int add_x = 0; add_x < side; ++add_x)
-                for (int add_y = 0; add_y < side; ++add_y)
-                {
-                    int cur_x = x + add_x, cur_y = y + add_y;
+            for (int add_x = 0; add_x < side && x + add_x < final.x; ++add_x)
+                for (int add_y = 0; add_y < side && y + add_y < final.y; ++add_y)
+                    canvas[x + add_x][y + add_y] = colour;
 
-                    if (cur_x >= final.x)
-                        cur_x = prev_x;
-
-                    if (cur_y >= final.y)
-                        cur_y = prev_y;
-
-                    canvas[cur_x][cur_y] = colour;
-
-                    prev_x = cur_x;
-                    prev_y = cur_y;
-                }
             if (d < 0)
                 d += dS;
             else
@@ -109,8 +84,8 @@ void show_canvas(SDL_Renderer *renderer, SDL_Colour **canvas, uint16_t w, uint16
                 for (int y = 0; y < scale; ++y)
                     SDL_RenderDrawPoint(renderer, i * scale + x, j * scale + y);
 
-            // Refresh animation every 32 pixels drawn
-            if (animate && j % 32 == 0)
+            // Refresh animation every 100 pixels drawn
+            if (animate && j % 100 == 0)
                 SDL_RenderPresent(renderer);
         }
     }
