@@ -37,31 +37,43 @@ int main(int argc, char **argv)
     SDL_RenderClear(MainDemo.display.renderer);
     SDL_RenderPresent(MainDemo.display.renderer);
 
-    SDL_Colour **canvas = malloc(CANVAS_W * sizeof(SDL_Colour *));
-    for (int i = 0; i < CANVAS_W; ++i)
-    {
-        canvas[i] = malloc(WINDOW_H * sizeof(SDL_Colour));
+    Canvas *canvas = malloc(sizeof(Canvas));
 
-        for (int j = 0; j < CANVAS_H; ++j)
+    canvas->w = CANVAS_W;
+    canvas->h = CANVAS_H;
+
+    canvas->data = malloc(canvas->w * sizeof(SDL_Colour *));
+
+    for (int i = 0; i < canvas->w; ++i)
+    {
+        canvas->data[i] = malloc(canvas->h * sizeof(SDL_Colour));
+
+        for (int j = 0; j < canvas->h; ++j)
         {
-            canvas[i][j].r = 0;
-            canvas[i][j].g = 0;
-            canvas[i][j].b = 0;
-            canvas[i][j].a = 0;
+            canvas->data[i][j].r = 0;
+            canvas->data[i][j].g = 0;
+            canvas->data[i][j].b = 0;
+            canvas->data[i][j].a = 0;
         }
     }
 
-    SDL_Colour **dense = malloc(WINDOW_W * sizeof(SDL_Colour *));
-    for (int i = 0; i < WINDOW_W; ++i)
-    {
-        dense[i] = malloc(WINDOW_H * sizeof(SDL_Colour));
+    Canvas *dense = malloc(sizeof(Canvas));
 
-        for (int j = 0; j < WINDOW_H; ++j)
+    dense->w = WINDOW_W;
+    dense->h = WINDOW_H;
+
+    dense->data = malloc(dense->w * sizeof(SDL_Colour *));
+
+    for (int i = 0; i < dense->w; ++i)
+    {
+        dense->data[i] = malloc(dense->h * sizeof(SDL_Colour));
+
+        for (int j = 0; j < dense->h; ++j)
         {
-            dense[i][j].r = 0;
-            dense[i][j].g = 0;
-            dense[i][j].b = 0;
-            dense[i][j].a = 0;
+            dense->data[i][j].r = 0;
+            dense->data[i][j].g = 0;
+            dense->data[i][j].b = 0;
+            dense->data[i][j].a = 0;
         }
     }
 
@@ -86,7 +98,7 @@ int main(int argc, char **argv)
         line_colour.b = b;
         line_colour.a = a;
 
-        dense = bresenham(initial, final, PIXEL_SIDE, SAMPLING_DENSITY, dense, line_colour);
+        bresenham(initial, final, PIXEL_SIDE, SAMPLING_DENSITY, dense, line_colour);
 
         initial.x /= PIXEL_SIDE;
         initial.y /= PIXEL_SIDE;
@@ -94,10 +106,10 @@ int main(int argc, char **argv)
         final.x /= PIXEL_SIDE;
         final.y /= PIXEL_SIDE;
 
-        canvas = bresenham(initial, final, 1, 1, canvas, line_colour);
+        bresenham(initial, final, 1, 1, canvas, line_colour);
     }
 
-    show_canvas(MainDemo.display.renderer, canvas, CANVAS_W, CANVAS_H, PIXEL_SIDE, ANIMATE);
+    show_canvas(MainDemo.display.renderer, canvas, PIXEL_SIDE, ANIMATE);
 
     // Give time before anti-aliasing happens
     if (!ANIMATE)
@@ -105,8 +117,8 @@ int main(int argc, char **argv)
 
     // show_canvas(MainDemo.display.renderer, dense, WINDOW_W, WINDOW_H, 1, ANIMATE);
 
-    super_sample(dense, canvas, WINDOW_W, WINDOW_H, PIXEL_SIDE, SAMPLING_DENSITY);
-    show_canvas(MainDemo.display.renderer, canvas, CANVAS_W, CANVAS_H, PIXEL_SIDE, ANIMATE);
+    super_sample(dense, canvas, PIXEL_SIDE, SAMPLING_DENSITY);
+    show_canvas(MainDemo.display.renderer, canvas, PIXEL_SIDE, ANIMATE);
 
     SDL_Event e;
     while (MainDemo.is_running)
