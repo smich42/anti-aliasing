@@ -5,8 +5,8 @@
 #include "antialiasing.h"
 #include "demo.h"
 #include "draw.h"
+#include "experiment.h"
 
-#define SAMPLING_DENSITY 1
 #define PIXEL_SIDE 12
 
 #define DISPLAY_TITLE "Anti-aliasing Demo"
@@ -38,67 +38,32 @@ int main(int argc, char **argv)
     SDL_RenderPresent(MainDemo.display.renderer);
 
     Canvas *canvas = malloc(sizeof(Canvas));
-
-    canvas->w = CANVAS_W;
-    canvas->h = CANVAS_H;
-
-    canvas->data = malloc(canvas->w * sizeof(SDL_Colour *));
-
-    for (int i = 0; i < canvas->w; ++i)
-    {
-        canvas->data[i] = malloc(canvas->h * sizeof(SDL_Colour));
-
-        for (int j = 0; j < canvas->h; ++j)
-        {
-            canvas->data[i][j].r = 0;
-            canvas->data[i][j].g = 0;
-            canvas->data[i][j].b = 0;
-            canvas->data[i][j].a = 0;
-        }
-    }
-
     Canvas *dense = malloc(sizeof(Canvas));
+    Canvas *compare = malloc(sizeof(Canvas));
 
-    dense->w = WINDOW_W;
-    dense->h = WINDOW_H;
-
-    dense->data = malloc(dense->w * sizeof(SDL_Colour *));
-
-    for (int i = 0; i < dense->w; ++i)
-    {
-        dense->data[i] = malloc(dense->h * sizeof(SDL_Colour));
-
-        for (int j = 0; j < dense->h; ++j)
-        {
-            dense->data[i][j].r = 0;
-            dense->data[i][j].g = 0;
-            dense->data[i][j].b = 0;
-            dense->data[i][j].a = 0;
-        }
-    }
+    canvas_init(canvas, CANVAS_W, CANVAS_H);
+    canvas_init(dense, WINDOW_W, WINDOW_H);
+    canvas_init(compare, WINDOW_W, WINDOW_H);
 
     FILE *rf = fopen("in.txt", "r");
 
     uint16_t N;
     fscanf(rf, "%hu", &N);
 
-    coords initial, final;
-
-    uint16_t r, g, b, a;
-    SDL_Colour line_colour;
+    coords input[N][2];
+    SDL_Colour colours[N];
 
     for (int i = 0; i < N; ++i)
     {
-        fscanf(rf, "%hu %hu %hu %hu", &r, &g, &b, &a);
-        fscanf(rf, "%hu %hu", &initial.x, &final.x);
-        fscanf(rf, "%hu %hu", &initial.y, &final.y);
+        fscanf(rf, "%hu %hu %hu %hu", &colours[i].r, &colours[i].g, &colours[i].b, &colours[i].a);
 
-        line_colour.r = r;
-        line_colour.g = g;
-        line_colour.b = b;
-        line_colour.a = a;
+        fscanf(rf, "%hu %hu", &input[i][0].x, &input[i][1].x);
+        fscanf(rf, "%hu %hu", &input[i][0].y, &input[i][1].y);
 
-        bresenham(initial, final, PIXEL_SIDE, SAMPLING_DENSITY, dense, line_colour);
+        bresenham(input[i][0], input[i][1], PIXEL_SIDE, PIXEL_SIDE, compare, colours[i]);
+
+        coords initial = input[i][0];
+        coords final = input[i][1];
 
         initial.x /= PIXEL_SIDE;
         initial.y /= PIXEL_SIDE;
@@ -106,19 +71,42 @@ int main(int argc, char **argv)
         final.x /= PIXEL_SIDE;
         final.y /= PIXEL_SIDE;
 
-        bresenham(initial, final, 1, 1, canvas, line_colour);
+        bresenham(initial, final, 1, 1, canvas, colours[i]);
     }
 
-    show_canvas(MainDemo.display.renderer, canvas, PIXEL_SIDE, ANIMATE);
+    canvas = canvas_enlarge(canvas, PIXEL_SIDE);
+    canvas_show(MainDemo.display.renderer, canvas, ANIMATE);
 
-    // Give time before anti-aliasing happens
-    if (!ANIMATE)
-        sleep(2);
+    Canvas *ss[(int) PIXEL_SIDE / 2]; // Could instead use cbrt(PIXEL_SIDE) as an upper-bound for number of divisors
 
-    // show_canvas(MainDemo.display.renderer, dense, WINDOW_W, WINDOW_H, 1, ANIMATE);
+    int cnt = 0;
+    for (int density = 1; density <= PIXEL_SIDE; ++density)
+    {
+        if (PIXEL_SIDE % density == 0)
+        {
+            for (int i = 0; i < N; ++i)
+                bresenham(input[i][0], input[i][1], PIXEL_SIDE, density, dense, colours[i]);
 
-    super_sample(dense, canvas, PIXEL_SIDE, SAMPLING_DENSITY);
-    show_canvas(MainDemo.display.renderer, canvas, PIXEL_SIDE, ANIMATE);
+            ss[cnt] = malloc(sizeof(Canvas));
+            canvas_init(ss[cnt], CANVAS_W, CANVAS_H);
+
+            super_sample(dense, ss[cnt], PIXEL_SIDE, density);
+
+            ss[cnt] = canvas_enlarge(ss[cnt], PIXEL_SIDE);
+            printf("%.2lf%%\n", 100 * compare_canvasses(compare, ss[cnt]));
+
+            canvas_show(MainDemo.display.renderer, dense, ANIMATE);
+            sleep(1);
+            canvas_show(MainDemo.display.renderer, ss[cnt], ANIMATE);
+
+            canvas_reset(dense);
+            ++cnt;
+
+            sleep(3);
+        }
+    }
+
+    canvas_show(MainDemo.display.renderer, compare, ANIMATE);
 
     SDL_Event e;
     while (MainDemo.is_running)

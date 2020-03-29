@@ -2,6 +2,7 @@
   <dictionary name="stavr">
     <words>
       <w>antialiasing</w>
+      <w>supersampling</w>
     </words>
   </dictionary>
 </component>
