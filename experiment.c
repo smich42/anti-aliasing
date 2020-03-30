@@ -2,12 +2,13 @@
 
 #include "experiment.h"
 
-#define MAX(a, b) (a > b ? a : b)
-#define MIN(a, b) (a < b ? a : b)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 double colour_similarity(SDL_Colour a, SDL_Colour b)
 {
     double total_similarity = 0;
+
 
     if (a.r != 0 || b.r != 0)
         total_similarity += MIN((double) a.r, (double) (b.r)) / MAX((double) a.r, (double) b.r);
@@ -37,7 +38,12 @@ double compare_canvasses(Canvas *A, Canvas *B)
 
     for (int i = 0; i < A->w; ++i)
         for (int j = 0; j < A->h; ++j)
-            similarity += colour_similarity(A->data[i][j], B->data[i][j]) / (double) pixel_num;
+            if (A->data[i][j].r == 0 && B->data[i][j].r == 0 &&
+                A->data[i][j].g == 0 && B->data[i][j].g == 0 &&
+                A->data[i][j].b == 0 && B->data[i][j].b == 0)
+                --pixel_num;
+            else
+                similarity += colour_similarity(A->data[i][j], B->data[i][j]) / (double) pixel_num;
 
     return similarity;
 }

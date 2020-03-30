@@ -30,6 +30,8 @@ Demo MainDemo = {
         SDL_FALSE
 };
 
+void run_demo(void);
+
 int main(int argc, char **argv)
 {
     demo_init(&MainDemo, WINDOW_W, WINDOW_H, DISPLAY_TITLE);
@@ -37,6 +39,35 @@ int main(int argc, char **argv)
     SDL_RenderClear(MainDemo.display.renderer);
     SDL_RenderPresent(MainDemo.display.renderer);
 
+
+    SDL_Event e;
+    bool demo_run = false;
+
+    while (MainDemo.is_running)
+    {
+        while (SDL_PollEvent(&e))
+            switch (e.type)
+            {
+                case SDL_QUIT:
+                    MainDemo.is_running = SDL_FALSE;
+                    break;
+
+                default:
+                    if (!demo_run)
+                    {
+                        run_demo();
+                        demo_run = true;
+                    }
+            }
+    }
+
+    demo_quit(&MainDemo);
+
+    return 0;
+}
+
+void run_demo(void)
+{
     Canvas *canvas = malloc(sizeof(Canvas));
     Canvas *dense = malloc(sizeof(Canvas));
     Canvas *compare = malloc(sizeof(Canvas));
@@ -74,9 +105,6 @@ int main(int argc, char **argv)
         bresenham(initial, final, 1, 1, canvas, colours[i]);
     }
 
-    canvas = canvas_enlarge(canvas, PIXEL_SIDE);
-    canvas_show(MainDemo.display.renderer, canvas, ANIMATE);
-
     Canvas *ss[(int) PIXEL_SIDE / 2]; // Could instead use cbrt(PIXEL_SIDE) as an upper-bound for number of divisors
 
     int cnt = 0;
@@ -93,34 +121,19 @@ int main(int argc, char **argv)
             super_sample(dense, ss[cnt], PIXEL_SIDE, density);
 
             ss[cnt] = canvas_enlarge(ss[cnt], PIXEL_SIDE);
-            printf("%.2lf%%\n", 100 * compare_canvasses(compare, ss[cnt]));
+            printf("Similarity: %.2lf%%\n\n", 100 * compare_canvasses(compare, ss[cnt]));
 
             canvas_show(MainDemo.display.renderer, dense, ANIMATE);
-            sleep(1);
             canvas_show(MainDemo.display.renderer, ss[cnt], ANIMATE);
 
             canvas_reset(dense);
             ++cnt;
 
-            sleep(3);
+            sleep(2);
         }
     }
 
     canvas_show(MainDemo.display.renderer, compare, ANIMATE);
 
-    SDL_Event e;
-    while (MainDemo.is_running)
-    {
-        while (SDL_PollEvent(&e))
-            switch (e.type)
-            {
-                case SDL_QUIT:
-                    MainDemo.is_running = SDL_FALSE;
-                    break;
-            }
-    }
-
-    demo_quit(&MainDemo);
-
-    return 0;
+    printf("Done running demo.\n");
 }

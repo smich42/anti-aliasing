@@ -4,7 +4,7 @@
 
 void super_sample(Canvas *dense, Canvas *canvas, uint16_t side, uint16_t density)
 {
-    printf("Applying Super-Sampling...\n");
+    printf("Applying Super-Sampling with density = %hu\n", density);
 
     uint16_t step = side / density;
 
