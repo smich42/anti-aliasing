@@ -1,7 +1,9 @@
 #ifndef ANTI_ALIASING_DRAW_H
 #define ANTI_ALIASING_DRAW_H
 
+#include <stdint.h>
 #include <stdbool.h>
+
 #include "SDL2/SDL.h"
 #include "demo.h"
 

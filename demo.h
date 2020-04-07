@@ -1,6 +1,7 @@
 #ifndef ANTI_ALIASING_DEMO_H
 #define ANTI_ALIASING_DEMO_H
 
+#include <stdint.h>
 #include <stdbool.h>
 
 #include "SDL2/SDL.h"
