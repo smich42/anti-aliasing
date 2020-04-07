@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <sys/time.h>
 
 #include "antialiasing.h"
 #include "demo.h"
@@ -105,13 +107,16 @@ void run_demo(void)
         bresenham(initial, final, 1, 1, canvas, colours[i]);
     }
 
-    Canvas *ss[(int) PIXEL_SIDE / 2]; // Could instead use cbrt(PIXEL_SIDE) as an upper-bound for number of divisors
+    Canvas *ss[(int) PIXEL_SIDE]; // Could instead use cbrt(PIXEL_SIDE) as an upper-bound for number of divisors
 
     int cnt = 0;
     for (int density = 1; density <= PIXEL_SIDE; ++density)
     {
         if (PIXEL_SIDE % density == 0)
         {
+            struct timespec start, end;
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
             for (int i = 0; i < N; ++i)
                 bresenham(input[i][0], input[i][1], PIXEL_SIDE, density, dense, colours[i]);
 
@@ -120,20 +125,40 @@ void run_demo(void)
 
             super_sample(dense, ss[cnt], PIXEL_SIDE, density);
 
+            clock_gettime(CLOCK_MONOTONIC, &end);
+
+            double seconds_elapsed =
+                    (double) (end.tv_sec - start.tv_sec) + (double) (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+
             ss[cnt] = canvas_enlarge(ss[cnt], PIXEL_SIDE);
-            printf("Similarity: %.2lf%%\n\n", 100 * compare_canvasses(compare, ss[cnt]));
+
+            printf("\tSimilarity: %.2f%%\n", 100 * compare_canvasses(compare, ss[cnt]));
+            printf("\tTime elapsed: %.2lf ms\n", seconds_elapsed * 1000);
 
             canvas_show(MainDemo.display.renderer, dense, ANIMATE);
+
+            if (!ANIMATE)
+                sleep(1);
+
             canvas_show(MainDemo.display.renderer, ss[cnt], ANIMATE);
 
             canvas_reset(dense);
-            ++cnt;
 
-            sleep(2);
+            if (!ANIMATE)
+                sleep(2);
+
+            ++cnt;
         }
     }
 
     canvas_show(MainDemo.display.renderer, compare, ANIMATE);
 
-    printf("Done running demo.\n");
+    free(canvas);
+    free(dense);
+    free(compare);
+
+    for (int i = 0; i < PIXEL_SIDE / 2; ++i)
+        free(ss[i]);
+
+    printf("Finished running demo.\n");
 }
