@@ -47,6 +47,15 @@ void canvas_init(Canvas *canvas, uint16_t w, uint16_t h)
     }
 }
 
+void canvas_free(Canvas *canvas)
+{
+    for (int i = 0; i < canvas->w; ++i)
+        free(canvas->data[i]);
+
+    free(canvas->data);
+    free(canvas);
+}
+
 void canvas_reset(Canvas *canvas)
 {
     for (int i = 0; i < canvas->w; ++i)
@@ -72,6 +81,8 @@ Canvas *canvas_enlarge(Canvas *canvas, uint16_t scale)
                     new_canvas->data[i * scale + x][j * scale + y] = canvas->data[i][j];
         }
 
+    canvas_free(canvas);
+
     return new_canvas;
 }
 
@@ -89,8 +100,8 @@ void canvas_show(SDL_Renderer *renderer, Canvas *canvas, bool animate)
 
             SDL_RenderDrawPoint(renderer, i, j);
 
-            // Refresh animation every 5000 pixels drawn
-            if (animate && ((i + 1) * (j + 1)) % 5000 == 0)
+            // Refresh animation every (some number) pixels drawn
+            if (animate && ((i + 1) * (j + 1)) % 2000 == 0)
                 SDL_RenderPresent(renderer);
         }
     }

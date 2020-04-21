@@ -13,8 +13,8 @@
 
 #define DISPLAY_TITLE "Anti-aliasing Demo"
 
-#define WINDOW_W 1200
-#define WINDOW_H 900
+#define WINDOW_W 840
+#define WINDOW_H 720
 
 #define CANVAS_W (WINDOW_W / PIXEL_SIDE)
 #define CANVAS_H (WINDOW_H / PIXEL_SIDE)
@@ -60,6 +60,7 @@ int main(int argc, char **argv)
                         run_demo();
                         demo_run = true;
                     }
+                    break;
             }
     }
 
@@ -107,7 +108,7 @@ void run_demo(void)
         bresenham(initial, final, 1, 1, canvas, colours[i]);
     }
 
-    Canvas *ss[(int) PIXEL_SIDE]; // Could instead use cbrt(PIXEL_SIDE) as an upper-bound for number of divisors
+    Canvas *ss[(int) PIXEL_SIDE / 2]; // Could instead use cbrt(PIXEL_SIDE) as an upper bound for number of divisors
 
     int cnt = 0;
     for (int density = 1; density <= PIXEL_SIDE; ++density)
@@ -127,15 +128,14 @@ void run_demo(void)
 
             clock_gettime(CLOCK_MONOTONIC, &end);
 
-            double seconds_elapsed =
-                    (double) (end.tv_sec - start.tv_sec) + (double) (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+            float seconds_elapsed =
+                    (float) (end.tv_sec - start.tv_sec) + (float) (end.tv_nsec - start.tv_nsec) / 1000000000.0f;
 
             ss[cnt] = canvas_enlarge(ss[cnt], PIXEL_SIDE);
 
             printf("\tSimilarity: %.2f%%\n", 100 * compare_canvasses(compare, ss[cnt]));
-            printf("\tTime elapsed: %.2lf ms\n", seconds_elapsed * 1000);
-
-            canvas_show(MainDemo.display.renderer, dense, ANIMATE);
+            printf("\tSimilarity: %.2f%%\n", 100 * compare_canvasses(compare, ss[cnt]));
+            printf("\tTime elapsed: %.2lf ms\n\n", seconds_elapsed * 1000);
 
             if (!ANIMATE)
                 sleep(1);
@@ -144,6 +144,9 @@ void run_demo(void)
 
             canvas_reset(dense);
 
+            canvas_free(ss[cnt]);
+            free(ss[cnt]);
+
             if (!ANIMATE)
                 sleep(2);
 
@@ -151,14 +154,50 @@ void run_demo(void)
         }
     }
 
-    canvas_show(MainDemo.display.renderer, compare, ANIMATE);
+    Canvas *lp[(int) PIXEL_SIDE / 2];
 
-    free(canvas);
+    cnt = 0;
+    for (int side = 1; side <= PIXEL_SIDE; side += 2)
+    {
+        struct timespec start, end;
+        clock_gettime(CLOCK_MONOTONIC, &start);
+
+        lp[cnt] = malloc(sizeof(Canvas));
+        canvas_init(lp[cnt], CANVAS_W, CANVAS_H);
+
+        low_pass_filter(canvas, lp[cnt], side);
+
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        float seconds_elapsed =
+                (float) (end.tv_sec - start.tv_sec) + (float) (end.tv_nsec - start.tv_nsec) / 1000000000.0f;
+
+        lp[cnt] = canvas_enlarge(lp[cnt], PIXEL_SIDE);
+
+        printf("\tSimilarity: %.2f%%\n", 100 * compare_canvasses(compare, lp[cnt]));
+        printf("\tSimilarity: %.2f%%\n", 100 * compare_canvasses(compare, lp[cnt]));
+        printf("\tTime elapsed: %.2lf ms\n\n", seconds_elapsed * 1000);
+
+        if (!ANIMATE)
+            sleep(1);
+
+        canvas_show(MainDemo.display.renderer, lp[cnt], ANIMATE);
+
+        canvas_reset(dense);
+
+        canvas_free(lp[cnt]);
+        free(lp[cnt]);
+
+        if (!ANIMATE)
+            sleep(2);
+
+        ++cnt;
+    }
+
+    canvas_free(canvas);
+
     free(dense);
     free(compare);
-
-    for (int i = 0; i < PIXEL_SIDE / 2; ++i)
-        free(ss[i]);
 
     printf("Finished running demo.\n");
 }

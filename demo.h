@@ -34,6 +34,8 @@ void demo_quit(Demo *to_quit);
 
 void canvas_init(Canvas *canvas, uint16_t w, uint16_t h);
 
+void canvas_free(Canvas *canvas);
+
 void canvas_reset(Canvas *canvas);
 
 Canvas *canvas_enlarge(Canvas *canvas, uint16_t scale);
