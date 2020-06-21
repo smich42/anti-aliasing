@@ -41,7 +41,6 @@ int main(int argc, char **argv)
     SDL_RenderClear(MainDemo.display.renderer);
     SDL_RenderPresent(MainDemo.display.renderer);
 
-
     SDL_Event e;
     bool demo_run = false;
 
